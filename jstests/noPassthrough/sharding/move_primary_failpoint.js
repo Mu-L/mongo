@@ -5,8 +5,7 @@
  * - The donor shard still has user data for that database (i.e. untracked unsharded
  *   collections that are movable by moveCollection).
  *
- * @tags: [requires_fcv_80, featureFlagTrackUnshardedCollectionUponCreation,
- * featureFlagReshardingForTimeseries]
+ * @tags: [requires_fcv_80]
  */
 import {EncryptedClient} from "jstests/fle2/libs/encrypted_client_util.js";
 import {configureFailPoint} from "jstests/libs/fail_point_util.js";
@@ -94,6 +93,7 @@ function testUserCollections({featureFlagTrackUnshardedCollectionsUponCreation})
     jsTest.log("The first transitionToDedicatedConfigServer response: " + tojson(transitionRes0));
     assert.eq(transitionRes0.state, "started", transitionRes0);
     assert.eq(transitionRes0.dbsToMove.length, 0, transitionRes0);
+    assert(transitionRes0.note === undefined);
 
     const transitionRes1 =
         assert.commandWorked(st.s.adminCommand({transitionToDedicatedConfigServer: 1}));
@@ -104,6 +104,7 @@ function testUserCollections({featureFlagTrackUnshardedCollectionsUponCreation})
     assert.gte(transitionRes1.remaining.chunks, 0, transitionRes1);
     assert.eq(transitionRes1.remaining.jumboChunks, 0, transitionRes1);
     assert.eq(transitionRes1.dbsToMove.length, 0, transitionRes1);
+    assert(transitionRes1.note === undefined);
 
     // Move the remaining data on shard0 to shard1.
     assert.commandWorked(st.s.adminCommand(
